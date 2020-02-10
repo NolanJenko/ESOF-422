@@ -1,0 +1,80 @@
+--FPS class diagram
+--Shooter Class is the "Main Character"
+class shooter
+attributes
+ name:String
+ health:Integer init : 100
+ weapon:Weapon
+ level:String
+operations
+
+--if player successfully attacks or defends
+--gain a level. The level will boost attack
+--and defend points.
+
+
+setLevel()
+begin
+end
+
+
+attack()
+begin
+end
+
+
+defend()
+begin
+end
+
+getWeapon()
+ begin
+ end
+
+getHealth()
+begin
+end
+
+end
+
+abstract class Weapon
+attributes
+ name:String
+ attack:Integer init
+operations
+useWeapon()
+ begin
+ end
+end
+
+class MysteryBox()
+begin
+end
+
+
+--Enemie class that will attack our shooter
+
+
+class enemies
+attrtibutes
+ name:String
+ health:Integer
+operations
+--Roll type of operation for attack and defend
+attack()
+ begin
+ end
+
+defend()
+ begin
+ end
+
+getHealth()
+begin
+end
+
+getWeapon()
+begin
+end
+
+end
