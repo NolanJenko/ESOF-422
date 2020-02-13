@@ -1,0 +1,73 @@
+model fps
+
+
+class Enemy
+attributes
+ health:Integer init:200
+end
+
+abstract class PlayerState
+operations
+ seeEnemy(i:Enemy)
+ begin
+ end
+end
+
+
+class Neutral < PlayerState
+attributes
+operations
+ seeEnemy(i:Enemy)
+ begin
+  declare eHealth:Integer;
+  eHealth := i.health;
+  if (eHealth > 100) then
+   self.player.playerState := self.player.attackState
+  end;
+ end
+end
+
+class Attack < PlayerState
+operations
+ seeEnemy(i:Enemy)
+ begin
+ end
+end
+
+
+class Player
+attributes 
+ health:Integer init: 100
+ playerState:PlayerState  
+ neutralState:Neutral
+ attackState:Attack
+operations
+ initInstance()
+ begin
+  self.health := 100;
+  self.neutralState := new Neutral;
+  self.attackState := new Attack;
+  self.playerState := self.neutralState;
+ end
+ 
+ seeEnemy(e:Enemy)
+ begin
+  self.playerState.seeEnemy(e);
+ end
+ statemachines
+  psm StatePattern
+   states
+    startMatch:initial
+     Neutral	[playerState = neutralState]
+     Attack	[playerState = attackState]
+   transitions
+    startup -> neutral {create}
+    Neutral -> Attack{ [e < 100] seeEnemy()}
+end
+end
+
+
+association state between
+ PlayerState[1]
+ Player[1]
+end
