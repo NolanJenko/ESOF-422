@@ -1,5 +1,20 @@
 model fps
 
+abstract class Weapon
+attributes
+end
+
+class M4 < Weapon
+attributes
+end
+
+class P90 < Weapon
+attributes
+ damage:Real
+ firerate:Real
+end
+
+
 
 class Enemy
 attributes
@@ -21,8 +36,11 @@ operations
  begin
   declare eHealth:Integer;
   eHealth := i.health;
-  if (eHealth > 100) then
+  if (eHealth < 100) then
    self.player.playerState := self.player.attackState
+  end;
+  if(eHealth > 100) then
+   self.player.playerState := self.player.panicState
   end;
  end
 end
@@ -32,8 +50,25 @@ operations
  seeEnemy(i:Enemy)
  begin
  end
+ lostOpponent()
+  begin
+  end
 end
 
+class Panic < PlayerState
+operations
+ seeEnemy(i:Enemy)
+  begin
+  end
+ lostOpponent()
+  begin
+  end
+end
+
+
+class Die < PlayerState
+operations
+end
 
 class Player
 attributes 
@@ -41,12 +76,14 @@ attributes
  playerState:PlayerState  
  neutralState:Neutral
  attackState:Attack
+ panicState:Panic
 operations
  initInstance()
  begin
   self.health := 100;
   self.neutralState := new Neutral;
   self.attackState := new Attack;
+  self.panicState := new Panic;
   self.playerState := self.neutralState;
  end
  
@@ -54,16 +91,21 @@ operations
  begin
   self.playerState.seeEnemy(e);
  end
+ lostOpponent()
+  begin
+  end
  statemachines
   psm StatePattern
    states
     startMatch:initial
      Neutral	[playerState = neutralState]
      Attack	[playerState = attackState]
+     Panic	[playerState = panicState]
    transitions
-    startup -> neutral {create}
-    Neutral -> Attack{ [e < 100] seeEnemy()}
-end
+    startMatch -> Neutral {create}
+    Neutral -> Attack { [e.health < 100] seeEnemy()}
+    Neutral -> Panic { [e.health > 100] seeEnemy()}
+  end
 end
 
 
@@ -71,3 +113,4 @@ association state between
  PlayerState[1]
  Player[1]
 end
+
