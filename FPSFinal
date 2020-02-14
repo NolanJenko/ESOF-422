@@ -1,0 +1,232 @@
+model fps
+
+abstract class PowerUps
+end
+
+class DamageBoost < PowerUps
+attributes
+ multiplier:Integer init:2
+operations
+ Boost(w:Weapon)
+ begin
+  w.damage := w.damage + self.multiplier;
+ end
+ removeBoost(w:Weapon)
+ begin
+  w.damage :=  w.damage - self.multiplier;
+ end
+end
+
+
+
+
+abstract class Weapon
+attributes
+ damage:Integer
+ firerate:Integer
+end
+
+class M4 < Weapon
+operations
+ M4()
+ begin
+  self.damage := 10;
+  self.firerate := 2;
+ end
+end
+
+class P90 < Weapon
+operations
+ P90()
+  begin
+   self.damage := 5;
+   self.firerate := 5;
+  end
+end
+
+class EnergySword < Weapon
+operations
+ EnergySword()
+  begin
+   self.damage := 100;
+   self.firerate := 1;
+  end
+end
+
+
+
+class Enemy
+attributes
+ health:Integer init:100
+ weapon:Weapon
+end
+
+abstract class PlayerState
+operations
+ seeEnemy(i:Enemy)
+ begin
+ end
+ recieveBlow()
+ begin 
+ end
+ fight(i:Enemy)
+ begin
+ end
+ beatEnemy(i:Enemy)
+ begin 
+ end
+ lostOpponent()
+ begin
+ end
+ rest()
+ begin
+ end
+end
+
+
+class Neutral < PlayerState
+attributes
+operations
+ seeEnemy(i:Enemy)
+ begin
+  declare eHealth:Integer;
+  eHealth := i.health;
+  if (eHealth <= self.player.health) then
+   self.player.playerState := self.player.attackState
+  end;
+  if(eHealth > self.player.health) then
+   self.player.playerState := self.player.panicState
+  end;
+ end
+ rest()
+ begin
+  self.player.health := self.player.health + (100 - self.player.health);
+ end
+end
+
+class Attack < PlayerState
+operations
+ fight(i:Enemy)
+  begin
+   self.player.health := self.player.health - i.weapon.firerate * i.weapon.damage;
+   i.health := i.health - self.player.weapon.firerate*self.player.weapon.damage;
+  end
+ recieveBlow()
+  begin
+   self.player.playerState := self.player.dieState;
+  end
+ beatEnemy(i:Enemy)
+  begin
+   self.player.playerState := self.player.neutralState;
+  end
+ lostOpponent()
+  begin
+   self.player.playerState := self.player.neutralState;
+  end
+end
+
+class Panic < PlayerState
+operations
+ seeEnemy(i:Enemy)
+  begin
+  end
+ lostOpponent()
+  begin
+   self.player.playerState := self.player.neutralState;
+  end
+end
+
+class Die < PlayerState
+end
+
+class Player
+attributes 
+ weapon:Weapon
+ health:Integer init: 100
+ playerState:PlayerState  
+ neutralState:Neutral
+ attackState:Attack
+ panicState:Panic
+ dieState:Die
+operations
+ initInstance()
+ begin
+  self.weapon := new M4;
+  self.health := 100;
+  self.neutralState := new Neutral;
+  self.attackState := new Attack;
+  self.panicState := new Panic;
+  self.dieState := new Die;
+  self.playerState := self.neutralState;
+ end
+ 
+ seeEnemy(e:Enemy)
+ begin
+  self.playerState.seeEnemy(e);
+ end
+
+ lostOpponent()
+  begin
+   self.playerState.lostOpponent()
+  end
+ 
+ beatEnemy(e:Enemy)
+  begin
+   self.playerState.beatEnemy(e)
+  end
+ 
+ recieveBlow()
+ begin
+  self.playerState.recieveBlow()
+ end
+
+
+ fight(e:Enemy)
+ begin
+  self.playerState.fight(e)
+ end
+ pre: self.health > 0
+ 
+ rest()
+ begin
+  self.playerState.rest()
+ end
+
+ statemachines
+  psm StatePattern
+   states
+    startMatch:initial
+     Neutral	[playerState = neutralState]
+     Attack	[playerState = attackState]
+     Panic	[playerState = panicState]
+     Die	[playerState = dieState]
+   transitions
+    startMatch -> Neutral {create}
+    Neutral -> Neutral {[health<100] rest() }
+    Neutral -> Attack { [e.health <= health and playerState = neutralState] seeEnemy()}
+    Neutral -> Panic { [e.health > health and playerState = neutralState] seeEnemy()}
+    Attack -> Die{ [health = 0] recieveBlow()}
+    Panic -> Die{ [health = 0] recieveBlow()}
+    Attack -> Neutral { [e.health = 0 and self.health > 0] beatEnemy() } 
+    Attack -> Neutral { lostOpponent() }
+    Panic -> Neutral { lostOpponent() }
+    Attack -> Attack { [self.health > 0] fight() }
+  end
+end
+
+
+association state between
+ PlayerState[1]
+ Player[1]
+end
+
+association guns between
+ Player[*]
+ Weapon[*]
+end
+
+association gun between
+ Enemy[*]
+ Weapon[*]
+end
+
